@@ -158,7 +158,7 @@ function renderWarriors() {
   document.getElementById("contentArea").innerHTML = `<h2>🏀 勇士陣容</h2>${html}`;
 }
 
-window.trainPlayer = function(index) {
+function trainPlayer(index) {
   const player = warriors[index];
   if (!player.trained) {
     player.trained = true;
@@ -168,7 +168,7 @@ window.trainPlayer = function(index) {
     renderWarriors();
     renderAssets();
   }
-};
+}
 
 function renderFreeAgents() {
   const html = freeAgents.map((p, i) => `
@@ -182,7 +182,7 @@ function renderFreeAgents() {
   document.getElementById("contentArea").innerHTML = `<h2>📝 自由市場</h2>${html}`;
 }
 
-window.signFreeAgent = function(index) {
+function signFreeAgent(index) {
   const player = freeAgents[index];
   if (money >= player.salary) {
     warriors.push({...player, trained: false});
@@ -195,7 +195,7 @@ window.signFreeAgent = function(index) {
   } else {
     alert("資金不足！");
   }
-};
+}
 
 function renderTeamSelection() {
   const teams = Object.keys(otherTeams);
@@ -203,7 +203,7 @@ function renderTeamSelection() {
   document.getElementById("contentArea").innerHTML = `<h2>🌍 選擇其他隊伍</h2>${html}`;
 }
 
-window.renderOtherTeam = function(team) {
+function renderOtherTeam(team) {
   const players = otherTeams[team];
   const html = players.map(p => `
     <div class="player">
@@ -211,9 +211,9 @@ window.renderOtherTeam = function(team) {
       <button onclick="startTrade('${team}','${p.name}')">交易</button>
     </div>`).join("");
   document.getElementById("contentArea").innerHTML = `<h2>👥 ${team} 球員列表</h2>${html}`;
-};
+}
 
-window.startTrade = function(team, targetName) {
+function startTrade(team, targetName) {
   const offer = prompt(`你想用哪些勇士球員來換 "${targetName}"？請用逗號分隔名稱，如：Wiggins,Kuminga`);
   const includePick = confirm("是否包含首輪籤？");
   if (!offer) return;
@@ -237,7 +237,44 @@ window.startTrade = function(team, targetName) {
   } else {
     alert("⚠️ 薪資不符，交易失敗。請保持薪資差額在 ±5M 以內");
   }
-};
+}
+
+function simulateGame() {
+  const teamScore = warriors.reduce((sum, p) => sum + p.rating, 0);
+  const rand = Math.random() * 100;
+  const result = (teamScore + rand > 300) ? "勝利" : "敗北";
+
+  const date = new Date().toLocaleString();
+  simLog.unshift(`[${date}] 模擬比賽結果：${result}｜總評分：${teamScore}`);
+  simLog = simLog.slice(0, 10);
+  decreaseContracts();
+  removeExpiredContracts();
+  alert(`本場比賽：${result}！`);
+  save();
+  renderAssets();
+}
+
+function decreaseContracts() {
+  warriors.forEach(p => {
+    if (p.contract > 0) p.contract -= 1;
+  });
+}
+
+function removeExpiredContracts() {
+  const expired = warriors.filter(p => p.contract === 0);
+  if (expired.length > 0) {
+    expired.forEach(p => {
+      freeAgents.push({...p, trained: false});
+    });
+    warriors = warriors.filter(p => p.contract > 0);
+    alert(`以下球員已到期並進入自由市場：\n${expired.map(p => p.name).join(", ")}`);
+  }
+}
+
+function showSimLog() {
+  const logHtml = simLog.length ? simLog.map(item => `<div>${item}</div>`).join("") : "目前無紀錄";
+  document.getElementById("contentArea").innerHTML = `<h2>📜 勝敗紀錄</h2>${logHtml}`;
+}
 
 function resetTrainingStatus() {
   warriors.forEach(p => p.trained = false);
@@ -265,16 +302,18 @@ function setup() {
   document.getElementById("btnResetTraining").onclick = resetTrainingStatus;
   document.getElementById("btnClear").onclick = resetSave;
 }
-  window.trainPlayer = trainPlayer;
-  window.signFreeAgent = signFreeAgent;
-  window.renderOtherTeam = renderOtherTeam;
-  window.startTrade = startTrade;
-  window.resetTrainingStatus = resetTrainingStatus;
-  window.resetSave = resetSave;
-  window.simulateGame = simulateGame;
-  window.showSimLog = showSimLog;
 
-  window.onload = setup;
+// 這裡是修正的重點！將函式綁到全域作用域
+window.trainPlayer = trainPlayer;
+window.signFreeAgent = signFreeAgent;
+window.renderOtherTeam = renderOtherTeam;
+window.startTrade = startTrade;
+window.simulateGame = simulateGame;
+window.showSimLog = showSimLog;
+window.resetTrainingStatus = resetTrainingStatus;
+window.resetSave = resetSave;
+
+window.onload = setup;
 })();
 </script>
 </body>
