@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>Sniper J GM 模擬器 v2.0</title>
+  <title>Sniper J GM 模擬器 v2.1 合約革命🔥</title>
   <style>
     body {
       font-family: "Microsoft JhengHei", sans-serif;
@@ -70,7 +70,7 @@
 </head>
 <body>
   <div class="section">
-    <h1>🏀 Sniper J GM 模擬器 v2.0</h1>
+    <h1>🏀 Sniper J GM 模擬器 v2.1 合約革命🔥</h1>
     <div id="summaryBar">載入中...</div>
     <div class="button-area">
       <button id="btnShowWarriors">勇士陣容</button>
@@ -88,7 +88,7 @@
 const ratingMap = { C:1, "C+":2, "B-":3, B:4, "B+":5, "A-":6, A:7, "A+":8, S:9, "S+":10 };
 const ratingStars = r => "★".repeat(Math.min(5, Math.round((ratingMap[r]||1)/2)));
 
-let warriors, freeAgents, otherTeams, money, salaryCap, picks, simLog;
+let warriors, freeAgents, otherTeams, money, salaryCap, picks, simLog, gameCount = 0;
 
 function defaultData() {
   return {
@@ -112,27 +112,32 @@ function defaultData() {
       金塊: [
         { name:"Nikola Jokic", grade:"S+", rating:97, salary:38, contract:4 },
         { name:"Jamal Murray", grade:"A", rating:84, salary:27, contract:3 }
+      ],
+      雷霆: [
+        { name:"Shai Gilgeous-Alexander", grade:"S", rating:90, salary:33, contract:3 },
+        { name:"Jalen Williams", grade:"A", rating:84, salary:20, contract:3 }
       ]
     },
     money: 100,
     salaryCap: 120,
     picks: 1,
-    simLog: []
+    simLog: [],
+    gameCount: 0
   };
 }
 
 function save() {
   localStorage.setItem("sniperJGM", JSON.stringify({
-    warriors, freeAgents, otherTeams, money, salaryCap, picks, simLog
+    warriors, freeAgents, otherTeams, money, salaryCap, picks, simLog, gameCount
   }));
 }
 
 function load() {
   const data = JSON.parse(localStorage.getItem("sniperJGM"));
   if (data && data.warriors) {
-    ({warriors, freeAgents, otherTeams, money, salaryCap, picks, simLog} = data);
+    ({warriors, freeAgents, otherTeams, money, salaryCap, picks, simLog, gameCount} = data);
   } else {
-    ({warriors, freeAgents, otherTeams, money, salaryCap, picks, simLog} = defaultData());
+    ({warriors, freeAgents, otherTeams, money, salaryCap, picks, simLog, gameCount} = defaultData());
     save();
   }
 }
@@ -143,7 +148,7 @@ function getTotalSalary() {
 
 function renderAssets() {
   document.getElementById("summaryBar").innerHTML =
-    `💰 資金：$${money}M｜💼 工資：$${getTotalSalary()}M / $${salaryCap}M｜🎯 首輪籤：${picks}`;
+    `💰 資金：$${money}M｜💼 工資：$${getTotalSalary()}M / $${salaryCap}M｜🎯 首輪籤：${picks}｜📆 比賽場數：${gameCount}`;
 }
 
 function renderWarriors() {
@@ -158,7 +163,7 @@ function renderWarriors() {
   document.getElementById("contentArea").innerHTML = `<h2>🏀 勇士陣容</h2>${html}`;
 }
 
-function trainPlayer(index) {
+window.trainPlayer = function(index) {
   const player = warriors[index];
   if (!player.trained) {
     player.trained = true;
@@ -168,7 +173,7 @@ function trainPlayer(index) {
     renderWarriors();
     renderAssets();
   }
-}
+};
 
 function renderFreeAgents() {
   const html = freeAgents.map((p, i) => `
@@ -182,18 +187,62 @@ function renderFreeAgents() {
   document.getElementById("contentArea").innerHTML = `<h2>📝 自由市場</h2>${html}`;
 }
 
-function signFreeAgent(index) {
+window.signFreeAgent = function(index) {
   const player = freeAgents[index];
   if (money >= player.salary) {
-    warriors.push({...player, trained: false});
+    const contractYears = Math.floor(Math.random() * 5) + 1;
+    warriors.push({...player, trained: false, contract: contractYears});
     money -= player.salary;
     freeAgents.splice(index, 1);
-    alert(`${player.name} 已簽約加入勇士！`);
+    alert(`${player.name} 簽下成功，合約 ${contractYears} 年！`);
     save();
     renderFreeAgents();
     renderAssets();
   } else {
     alert("資金不足！");
+  }
+};
+
+function simulateGame() {
+  const teamScore = warriors.reduce((sum, p) => sum + p.rating, 0);
+  const rand = Math.random() * 100;
+  const result = (teamScore + rand > 300) ? "勝利" : "敗北";
+
+  const date = new Date().toLocaleString();
+  simLog.unshift(`[${date}] 模擬比賽結果：${result}｜總評分：${teamScore}`);
+  simLog = simLog.slice(0, 10);
+  gameCount++;
+
+  if (gameCount % 10 === 0) {
+    decreaseContracts();
+    removeExpiredContracts();
+  }
+
+  alert(`本場比賽：${result}！`);
+  save();
+  renderAssets();
+}
+
+function showSimLog() {
+  const logHtml = simLog.length ? simLog.map(item => `<div>${item}</div>`).join("") : "目前無紀錄";
+  document.getElementById("contentArea").innerHTML = `<h2>📜 勝敗紀錄</h2>${logHtml}`;
+}
+
+function decreaseContracts() {
+  warriors.forEach(p => {
+    if (p.contract > 0) p.contract -= 1;
+  });
+}
+
+function removeExpiredContracts() {
+  const expired = warriors.filter(p => p.contract === 0);
+  if (expired.length > 0) {
+    expired.forEach(p => {
+      const randomYears = Math.floor(Math.random() * 5) + 1;
+      freeAgents.push({...p, trained: false, contract: randomYears});
+    });
+    warriors = warriors.filter(p => p.contract > 0);
+    alert(`以下球員已到期並進入自由市場：\n${expired.map(p => p.name).join(", ")}`);
   }
 }
 
@@ -203,7 +252,7 @@ function renderTeamSelection() {
   document.getElementById("contentArea").innerHTML = `<h2>🌍 選擇其他隊伍</h2>${html}`;
 }
 
-function renderOtherTeam(team) {
+window.renderOtherTeam = function(team) {
   const players = otherTeams[team];
   const html = players.map(p => `
     <div class="player">
@@ -211,9 +260,9 @@ function renderOtherTeam(team) {
       <button onclick="startTrade('${team}','${p.name}')">交易</button>
     </div>`).join("");
   document.getElementById("contentArea").innerHTML = `<h2>👥 ${team} 球員列表</h2>${html}`;
-}
+};
 
-function startTrade(team, targetName) {
+window.startTrade = function(team, targetName) {
   const offer = prompt(`你想用哪些勇士球員來換 "${targetName}"？請用逗號分隔名稱，如：Wiggins,Kuminga`);
   const includePick = confirm("是否包含首輪籤？");
   if (!offer) return;
@@ -237,44 +286,7 @@ function startTrade(team, targetName) {
   } else {
     alert("⚠️ 薪資不符，交易失敗。請保持薪資差額在 ±5M 以內");
   }
-}
-
-function simulateGame() {
-  const teamScore = warriors.reduce((sum, p) => sum + p.rating, 0);
-  const rand = Math.random() * 100;
-  const result = (teamScore + rand > 300) ? "勝利" : "敗北";
-
-  const date = new Date().toLocaleString();
-  simLog.unshift(`[${date}] 模擬比賽結果：${result}｜總評分：${teamScore}`);
-  simLog = simLog.slice(0, 10);
-  decreaseContracts();
-  removeExpiredContracts();
-  alert(`本場比賽：${result}！`);
-  save();
-  renderAssets();
-}
-
-function decreaseContracts() {
-  warriors.forEach(p => {
-    if (p.contract > 0) p.contract -= 1;
-  });
-}
-
-function removeExpiredContracts() {
-  const expired = warriors.filter(p => p.contract === 0);
-  if (expired.length > 0) {
-    expired.forEach(p => {
-      freeAgents.push({...p, trained: false});
-    });
-    warriors = warriors.filter(p => p.contract > 0);
-    alert(`以下球員已到期並進入自由市場：\n${expired.map(p => p.name).join(", ")}`);
-  }
-}
-
-function showSimLog() {
-  const logHtml = simLog.length ? simLog.map(item => `<div>${item}</div>`).join("") : "目前無紀錄";
-  document.getElementById("contentArea").innerHTML = `<h2>📜 勝敗紀錄</h2>${logHtml}`;
-}
+};
 
 function resetTrainingStatus() {
   warriors.forEach(p => p.trained = false);
@@ -302,16 +314,6 @@ function setup() {
   document.getElementById("btnResetTraining").onclick = resetTrainingStatus;
   document.getElementById("btnClear").onclick = resetSave;
 }
-
-// 這裡是修正的重點！將函式綁到全域作用域
-window.trainPlayer = trainPlayer;
-window.signFreeAgent = signFreeAgent;
-window.renderOtherTeam = renderOtherTeam;
-window.startTrade = startTrade;
-window.simulateGame = simulateGame;
-window.showSimLog = showSimLog;
-window.resetTrainingStatus = resetTrainingStatus;
-window.resetSave = resetSave;
 
 window.onload = setup;
 })();
