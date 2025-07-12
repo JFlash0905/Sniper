@@ -265,8 +265,16 @@ function setup() {
   document.getElementById("btnResetTraining").onclick = resetTrainingStatus;
   document.getElementById("btnClear").onclick = resetSave;
 }
+  window.trainPlayer = trainPlayer;
+  window.signFreeAgent = signFreeAgent;
+  window.renderOtherTeam = renderOtherTeam;
+  window.startTrade = startTrade;
+  window.resetTrainingStatus = resetTrainingStatus;
+  window.resetSave = resetSave;
+  window.simulateGame = simulateGame;
+  window.showSimLog = showSimLog;
 
-window.onload = setup;
+  window.onload = setup;
 })();
 </script>
 </body>
